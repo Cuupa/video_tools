@@ -1,9 +1,10 @@
 import moviepy.editor as mp
+from moviepy.audio.io import AudioFileClip
+
 
 def get_audio(file) -> AudioFileClip:
-  videoclip = mp.VideoFileClip(file) 
-  return videoclip.audio
+    return mp.VideoFileClip(file)
+
 
 def save_audio(file, dest):
-  videoclip = mp.VideoFileClip(file) 
-  videoclip.write_audiofile(dest) 
+    mp.VideoFileClip(file).audio.write_audiofile(dest)

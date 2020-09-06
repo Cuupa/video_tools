@@ -1,36 +1,46 @@
-import os
 import datetime
 import getpass
-from shutil import copyfile
+import os
+from pathlib import Path
 
+import FileUtil
+
+'''
+Name of the directory where the files are located
+'''
 mediacard_folder_determiner = {"100EOS5D"}
+
+'''
+Name of the mountpoint, where the cardreader is mounted
+'''
 path_to_mount = "/run/media/" + getpass.getuser()
 
+'''
+Path where the videos will be imported to
+'''
 output_dir = os.environ['HOME'] + os.path.sep + "Videos/Import"
 
-
-def walk(some_dir, level=1):
-    some_dir = some_dir.rstrip(os.path.sep)
-    assert os.path.isdir(some_dir)
-    num_sep = some_dir.count(os.path.sep)
-    for root, dirs, files in os.walk(some_dir):
-        yield root, dirs, files
-        num_sep_this = root.count(os.path.sep)
-        if num_sep + level <= num_sep_this:
-            del dirs[:]
+mov_file_endings = {".mov"}
+raw_file_endings = {".mlv", ".MLV"}
+raw_file_parts = "\\.M\\d\\d"
 
 
 def find_media_card():
-    for directories in walk(path_to_mount, level=2):
+    for directories in FileUtil.walk(path_to_mount, level=2):
         for directory in directories:
-            if isinstance(directory, list):
-                for directory_final in directory:
-                    if str(directory_final) in mediacard_folder_determiner:
-                        return directories[0], directory_final
+            if not isinstance(directory, list):
+                continue
+
+            for directory_final in directory:
+                if str(directory_final) in mediacard_folder_determiner:
+                    return directories[0], directory_final
     return None
 
 
 def create_directories(date):
+    """
+    Directories which are going to be created according to my workflow
+    """
     directory = output_dir + os.path.sep + date
     directories = {
         directory + " - {TEMPLATE}/Footage/MOV",
@@ -47,60 +57,40 @@ def create_directories(date):
 
 
 def process_mov(directory, date):
-    mov_files = []
-    '''
-    mov-files are not stored in a folder
-    '''
-    for root, _, files in os.walk(directory):
-        for file in files:
-            full_name = root + os.path.sep + file
-            if os.path.isfile(full_name) and str(file).endswith(".mov"):
-                mov_files.append(full_name)
-
+    mov_files = FileUtil.collect_files(directory, mov_file_endings)
+    out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/MOV"
     for file in mov_files:
-        out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/MOV"
-        print("[2]. copying " + file + " to " + out + os.path.sep + os.path.basename(file))
-        copyfile(file, out + os.path.sep + os.path.basename(file))
-        print("[3]. done ...")
+        FileUtil.copy_file(file, out + os.path.sep + os.path.basename(file))
 
 
 def process_raw(directory, date):
-    raw_files = []
-    '''
-    mov-files are not stored in a folder
-    '''
-    for root, _, files in os.walk(directory):
-        for file in files:
-            full_name = root + os.path.sep + file
-            if os.path.isfile(full_name) and (str(file).endswith(".mlv") or str(file).endswith(".MLV")):
-                raw_files.append(full_name)
-
+    raw_files = FileUtil.collect_files_with_regex(directory, raw_file_endings, raw_file_parts)
+    out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/RAW"
     for file in raw_files:
-        out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/RAW"
-        print("[3]. copying " + file + " to " + out + os.path.sep + os.path.basename(file))
-        copyfile(file, out + os.path.sep + os.path.basename(file))
-        print("[3]. done ...")
+        partent_dir_name = Path(file).parent.name
+        path_to_save = out + os.path.sep
+        if partent_dir_name not in mediacard_folder_determiner:
+            path_to_save = path_to_save + partent_dir_name + os.path.sep + os.path.basename(file)
+        else:
+            path_to_save = path_to_save + os.path.basename(file)
+        FileUtil.copy_file(file, path_to_save)
 
 
 def main():
-    rootdir, directory = find_media_card()
-    if directory is None or rootdir is None:
+    rootdir, mediacard_directory = find_media_card()
+    if mediacard_directory is None or rootdir is None:
         return
 
-    now = datetime.datetime.now()
-    date = now.strftime("%Y") + "." + now.strftime("%m") + "." + now.strftime("%d")
-    print("[1]. creating directories")
+    date = get_date()
     create_directories(date)
-    print("[1]. done ...")
-    card_dir = rootdir + os.path.sep + directory
-    print("[2]. processing mov files for " + card_dir)
+    card_dir = rootdir + os.path.sep + mediacard_directory
     process_mov(card_dir, date)
-    print("[2]. done ...")
-    print("[3]. processing raw files for " + card_dir)
     process_raw(card_dir, date)
-    print("[3]. done ...")
-    exit(-42)
 
 
-print(os.environ)
+def get_date():
+    now = datetime.datetime.now()
+    return now.strftime("%Y") + "." + now.strftime("%m") + "." + now.strftime("%d")
+
+
 main()
