@@ -49,7 +49,8 @@ def create_directories(date):
         directory + " - {TEMPLATE}/Footage/Calibration",
         directory + " - {TEMPLATE}/Edit",
         directory + " - {TEMPLATE}/Script",
-        directory + " - {TEMPLATE}/Review"
+        directory + " - {TEMPLATE}/Review",
+        directory + " - {TEMPLATE}/Final Cut"
     }
 
     for directory in directories:
@@ -74,6 +75,7 @@ def process_raw(directory, date):
         else:
             path_to_save = path_to_save + os.path.basename(file)
         FileUtil.copy_file(file, path_to_save)
+        print("Imported " + file)
 
 
 def main():
@@ -86,6 +88,7 @@ def main():
     card_dir = rootdir + os.path.sep + mediacard_directory
     process_mov(card_dir, date)
     process_raw(card_dir, date)
+    print("All files imported")
 
 
 def get_date():
