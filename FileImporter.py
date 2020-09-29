@@ -68,10 +68,10 @@ def process_raw(directory, date):
     raw_files = FileUtil.collect_files_with_regex(directory, raw_file_endings, raw_file_parts)
     out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/RAW"
     for file in raw_files:
-        partent_dir_name = Path(file).parent.name
+        parent_dir_name = Path(file).parent.name
         path_to_save = out + os.path.sep
-        if partent_dir_name not in mediacard_folder_determiner:
-            path_to_save = path_to_save + partent_dir_name + os.path.sep + os.path.basename(file)
+        if parent_dir_name not in mediacard_folder_determiner:
+            path_to_save = path_to_save + parent_dir_name + os.path.sep + os.path.basename(file)
         else:
             path_to_save = path_to_save + os.path.basename(file)
         FileUtil.copy_file(file, path_to_save)
