@@ -50,7 +50,8 @@ def create_directories(date):
         directory + " - {TEMPLATE}/Edit",
         directory + " - {TEMPLATE}/Script",
         directory + " - {TEMPLATE}/Review",
-        directory + " - {TEMPLATE}/Final Cut"
+        directory + " - {TEMPLATE}/Final Cut",
+        directory + " - {TEMPLATE}/Bill"
     }
 
     for directory in directories:
