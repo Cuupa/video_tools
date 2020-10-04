@@ -20,13 +20,14 @@ Path where the videos will be imported to
 '''
 output_dir = os.environ['HOME'] + os.path.sep + "Videos/Import"
 
-mov_file_endings = {".mov"}
+mov_file_endings = {".mov", ".MOV"}
 raw_file_endings = {".mlv", ".MLV"}
 raw_file_parts = "\\.M\\d\\d"
 
 
 def find_media_card():
     for directories in FileUtil.walk(path_to_mount, level=2):
+
         for directory in directories:
             if not isinstance(directory, list):
                 continue
