@@ -93,10 +93,10 @@ def main():
 
     date = get_date()
     create_directories(date, project_name)
+    print("Successfully created " + output_dir + os.path.sep + date + " - {0}".format(project_name) + os.path.sep)
     rootdir, mediacard_directory = find_media_card()
     if mediacard_directory is None or rootdir is None:
         print("No files for import found")
-        print("Just created the directories...")
         return
     card_dir = rootdir + os.path.sep + mediacard_directory
     process_mov(card_dir, date, project_name)
