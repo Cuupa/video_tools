@@ -35,7 +35,7 @@ def find_media_card():
             for directory_final in directory:
                 if str(directory_final) in mediacard_folder_determiner:
                     return directories[0], directory_final
-    return None
+    return None, None
 
 
 def create_directories(date):
@@ -81,12 +81,14 @@ def process_raw(directory, date):
 
 
 def main():
-    rootdir, mediacard_directory = find_media_card()
-    if mediacard_directory is None or rootdir is None:
-        return
 
     date = get_date()
     create_directories(date)
+    rootdir, mediacard_directory = find_media_card()
+    if mediacard_directory is None or rootdir is None:
+        print("No files for import found")
+        print("Just created the directories...")
+        return
     card_dir = rootdir + os.path.sep + mediacard_directory
     process_mov(card_dir, date)
     process_raw(card_dir, date)
