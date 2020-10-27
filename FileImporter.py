@@ -1,6 +1,7 @@
 import datetime
 import getpass
 import os
+import sys
 from pathlib import Path
 
 import FileUtil
@@ -38,37 +39,37 @@ def find_media_card():
     return None, None
 
 
-def create_directories(date):
+def create_directories(date, project_name):
     """
     Directories which are going to be created according to my workflow
     """
     directory = output_dir + os.path.sep + date
     directories = {
-        directory + " - {TEMPLATE}/Footage/MOV",
-        directory + " - {TEMPLATE}/Footage/RAW",
-        directory + " - {TEMPLATE}/Footage/Audio",
-        directory + " - {TEMPLATE}/Footage/Calibration",
-        directory + " - {TEMPLATE}/Edit",
-        directory + " - {TEMPLATE}/Script",
-        directory + " - {TEMPLATE}/Review",
-        directory + " - {TEMPLATE}/Final Cut",
-        directory + " - {TEMPLATE}/Bill"
+        directory + " - {0}/Footage/MOV".format(project_name),
+        directory + " - {0}/Footage/RAW".format(project_name),
+        directory + " - {0}/Footage/Audio".format(project_name),
+        directory + " - {0}/Footage/Calibration".format(project_name),
+        directory + " - {0}/Edit".format(project_name),
+        directory + " - {0}/Script".format(project_name),
+        directory + " - {0}/Review".format(project_name),
+        directory + " - {0}/Final Cut".format(project_name),
+        directory + " - {0}/Bill".format(project_name)
     }
 
     for directory in directories:
         os.makedirs(directory, exist_ok=True)
 
 
-def process_mov(directory, date):
+def process_mov(directory, date, project_name):
     mov_files = FileUtil.collect_files(directory, mov_file_endings)
-    out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/MOV"
+    out = output_dir + os.path.sep + date + " - {0}/Footage/MOV".format(project_name)
     for file in mov_files:
         FileUtil.copy_file(file, out + os.path.sep + os.path.basename(file))
 
 
-def process_raw(directory, date):
+def process_raw(directory, date, project_name):
     raw_files = FileUtil.collect_files_with_regex(directory, raw_file_endings, raw_file_parts)
-    out = output_dir + os.path.sep + date + " - {TEMPLATE}/Footage/RAW"
+    out = output_dir + os.path.sep + date + " - {0}/Footage/RAW".format(project_name)
     for file in raw_files:
         parent_dir_name = Path(file).parent.name
         path_to_save = out + os.path.sep
@@ -81,17 +82,25 @@ def process_raw(directory, date):
 
 
 def main():
+    arguments = sys.argv
+    project_name = ""
+    if len(arguments) >= 1:
+        for arg in range(1, len(arguments)):
+            project_name = project_name + arguments[arg] + " "
+        project_name = project_name.strip()
+    else:
+        project_name = "{TEMPLATE}"
 
     date = get_date()
-    create_directories(date)
+    create_directories(date, project_name)
     rootdir, mediacard_directory = find_media_card()
     if mediacard_directory is None or rootdir is None:
         print("No files for import found")
         print("Just created the directories...")
         return
     card_dir = rootdir + os.path.sep + mediacard_directory
-    process_mov(card_dir, date)
-    process_raw(card_dir, date)
+    process_mov(card_dir, date, project_name)
+    process_raw(card_dir, date, project_name)
     print("All files imported")
 
 
