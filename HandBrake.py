@@ -10,7 +10,7 @@ ffprobe_language = "{filename} -show_entries stream=index:stream_tags=language -
 journal = "journal.log"
 
 resultpath = path.join("~", "Convert", "Result")
-sourcepath = path.join("~", "2Convert", "Result")
+sourcepath = path.join("~", "Convert", "Source")
 valid_endings = ["mkv"]
 
 format = ["av_mp4", "av_mkv", "av_webm"]
