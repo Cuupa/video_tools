@@ -98,10 +98,10 @@ def main():
                 os.remove(target)
 
             cmd = create_command(file, target)
-            """
+
             subprocess.run(cmd)
             write_journal(file, target_path)
-            """
+
 
 
 def write_journal(file, real_path):
