@@ -46,27 +46,19 @@ selected_encoder = 1
 encoder = ["x265", "x265_10bit", "x265_12bit"]
 
 '''
-General input parameters like format, source and output
-'''
-input_arg = ["--input"]
-output_arg = ["--output"]
-format_arg = ["--format"]
-markers_arg = ["--markers"]
-
-'''
 Video options for quality 20 (lower number for higher quality).
 If using the quality options, --two-pass is not necessary
 '''
 video_quality = "20"
 selected_encoder_preset = 6
 encoder_preset = ["ultrafast", "superfast", "veryfast", "faster", "medium", "slow", "slower", "veryslow", "placebo"]
-video_options = "--encoder {codec} --quality {quality} --encoder-preset {encoder_preset}"
+video_options_template = "--encoder {codec} --quality {quality} --encoder-preset {encoder_preset}"
 
 '''
 audio options. audio tracks which aren't present will be skipped, so just enumerate from 1 to 15
 copy all audio tracks and if not possible use fallback audio
 '''
-audio_options = "--audio 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 --aencoder copy --audio-fallback {audio_fallback} "
+audio_options_template = "--audio 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 --aencoder copy --audio-fallback {audio_fallback} "
 
 '''
 Same as audio options. Tracks which aren't present will be skipped, so just enumerate from 1 to 15
@@ -100,29 +92,36 @@ def main():
 
         if convert_file:
             target_dir = path.dirname(file).replace(source_path, target_path)
-            target = path.join(target_dir, path.basename(file))
+            target = create_target_filename(path.join(target_dir, path.basename(file)))
             os.makedirs(target_dir, exist_ok=True)
             if path.isfile(target):
                 os.remove(target)
 
             cmd = create_command(file, target)
+            """
             subprocess.run(cmd)
             write_journal(file, target_path)
+            """
 
 
 def write_journal(file, real_path):
     journal_file = open(path.join(real_path, journal), 'a')
     journal_file.write(path.basename(file))
+    journal_file.write("\n")
 
 
 def create_command(file, target):
-    input_arg.append(file)
-    output_arg.append(create_target_filename(target))
-    format_arg.append(container[selected_container])
+    input_arg = ["--input", file]
+    output_arg = ["--output", target]
+    format_arg = ["--format", container[selected_container]]
+    markers_arg = ["--markers"]
     file_cmd = input_arg + output_arg + format_arg + markers_arg
+    video_options = video_options_template
     video_cmd = video_options.format(codec=encoder[selected_encoder],
                                      quality=video_quality,
                                      encoder_preset=encoder_preset[selected_encoder_preset]).split()
+
+    audio_options = audio_options_template
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
 
