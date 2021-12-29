@@ -60,7 +60,7 @@ If using the quality options, --two-pass is not necessary
 video_quality = "20"
 selected_encoder_preset = 6
 encoder_preset = ["ultrafast", "superfast", "veryfast", "faster", "medium", "slow", "slower", "veryslow", "placebo"]
-video_options = "--encoder {codec} --quality {quality} --encoder-preset {encoder-preset}"
+video_options = "--encoder {codec} --quality {quality} --encoder-preset {encoder_preset}"
 
 '''
 audio options. audio tracks which aren't present will be skipped, so just enumerate from 1 to 15
@@ -117,14 +117,15 @@ def write_journal(file, real_path):
 
 def create_command(file, target):
     input_arg.append(file)
-    target = create_target_filename(target)
-    output_arg.append(target)
+    output_arg.append(create_target_filename(target))
     format_arg.append(container[selected_container])
     file_cmd = input_arg + output_arg + format_arg + markers_arg
     video_cmd = video_options.format(codec=encoder[selected_encoder],
+                                     quality=video_quality,
                                      encoder_preset=encoder_preset[selected_encoder_preset]).split()
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
+
     cmd = ["handbrakeCLI"] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
     print(cmd)
     return cmd
