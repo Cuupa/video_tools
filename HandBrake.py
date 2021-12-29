@@ -54,10 +54,13 @@ format_arg = ["--format"]
 markers_arg = ["--markers"]
 
 '''
-Video options for quality 20 (lower number for higher quality)
+Video options for quality 20 (lower number for higher quality).
+If using the quality options, --two-pass is not necessary
 '''
 video_quality = "20"
-video_options = "--encoder {codec} --quality {quality} --two-pass "
+selected_encoder_preset = 6
+encoder_preset = ["ultrafast", "superfast", "veryfast", "faster", "medium", "slow", "slower", "veryslow", "placebo"]
+video_options = "--encoder {codec} --quality {quality} --encoder-preset {encoder-preset}"
 
 '''
 audio options. audio tracks which aren't present will be skipped, so just enumerate from 1 to 15
@@ -118,7 +121,8 @@ def create_command(file, target):
     output_arg.append(target)
     format_arg.append(container[selected_container])
     file_cmd = input_arg + output_arg + format_arg + markers_arg
-    video_cmd = video_options.format(codec=encoder[selected_encoder]).split()
+    video_cmd = video_options.format(codec=encoder[selected_encoder],
+                                     encoder_preset=encoder_preset[selected_encoder_preset]).split()
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
     cmd = ["handbrakeCLI"] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
