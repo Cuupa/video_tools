@@ -102,7 +102,7 @@ def main():
             target_dir = path.dirname(file).replace(source_path, target_path)
             target = path.join(target_dir, path.basename(file))
             os.makedirs(target_dir, exist_ok=True)
-            if path.exists(target):
+            if path.isfile(target):
                 os.remove(target)
 
             cmd = create_command(file, target)
