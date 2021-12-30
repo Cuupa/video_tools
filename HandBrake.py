@@ -20,50 +20,60 @@ respectively
 target_path = expanduser(path.join("~", "Convert", "Result"))
 source_path = expanduser(path.join("~", "Convert", "Source"))
 
+handbrakeCLI_path = "HandBrakeCLI"
+'''
+HandbrakeCLI needs to be downloaded seperately
+
+@See https://handbrake.fr/downloads2.php
+
+If you're using windows, move the binary next to your "HandBrake.exe"
+Should be default to "C:\Program Files\HandBrake"
+'''
+
+valid_endings = ["mkv", "m4v", "mp4"]
 '''
 File endings which will be queued for conversion
 '''
-valid_endings = ["mkv", "m4v", "mp4"]
 
+selected_container = 1
 '''
 Index for the target container file. 0 based
 '''
-selected_container = 1
 container = ["av_mp4", "av_mkv", "av_webm"]
 container_filetype = ["mp4", "mkv", "webm"]
 
+fallback_audio = ["he-aac", "aac"]
 '''
 he-aac is the higher quality audio codec but only available on macos.
 '''
-fallback_audio = ["he-aac", "aac"]
 
+selected_encoder = 1
+encoder = ["x265", "x265_10bit", "x265_12bit"]
 '''
 x265 encoders.
 10 bit has a quality improvement over the 8 bit standard x265 regarding rounding errors
 So the default will be 10bit
 '''
-selected_encoder = 1
-encoder = ["x265", "x265_10bit", "x265_12bit"]
 
+video_quality = "20"
 '''
 Video options for quality 20 (lower number for higher quality).
 If using the quality options, --two-pass is not necessary
 '''
-video_quality = "20"
 selected_encoder_preset = 6
 encoder_preset = ["ultrafast", "superfast", "veryfast", "faster", "medium", "slow", "slower", "veryslow", "placebo"]
 video_options_template = "--encoder {codec} --quality {quality} --encoder-preset {encoder_preset}"
 
+audio_options_template = "--audio 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 --aencoder copy --audio-fallback {audio_fallback} "
 '''
 audio options. audio tracks which aren't present will be skipped, so just enumerate from 1 to 15
 copy all audio tracks and if not possible use fallback audio
 '''
-audio_options_template = "--audio 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 --aencoder copy --audio-fallback {audio_fallback} "
 
+subtitles_options = "--subtitle 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 "
 '''
 Same as audio options. Tracks which aren't present will be skipped, so just enumerate from 1 to 15
 '''
-subtitles_options = "--subtitle 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 "
 
 
 def get_audio_fallback():
@@ -103,7 +113,6 @@ def main():
             write_journal(file, target_path)
 
 
-
 def write_journal(file, real_path):
     journal_file = open(path.join(real_path, journal), 'a')
     journal_file.write(path.basename(file))
@@ -125,9 +134,30 @@ def create_command(file, target):
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
 
-    cmd = ["handbrakeCLI"] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
+    cmd = [get_handbrake_path()] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
     print(cmd)
     return cmd
+
+
+def get_handbrake_path():
+    bin_not_found = "Could not find the {} binary".format(handbrakeCLI_path)
+    system = platform.system()
+    if system == "Darwin":
+        if path.isfile(handbrakeCLI_path):
+            return handbrakeCLI_path
+        location = subprocess.check_output(["where", handbrakeCLI_path])
+        if location == handbrakeCLI_path + " not found":
+            raise ValueError(bin_not_found)
+    elif system == "Windows":
+        if path.isfile(handbrakeCLI_path):
+            return handbrakeCLI_path
+        else:
+            return path.join("C:", "Program Files", "Handbrake", "HandBrakeCLI.exe")
+    elif system == "Linux":
+        location = subprocess.check_output(["which", handbrakeCLI_path])
+        if location.startswith("which: no " + handbrakeCLI_path + " in "):
+            raise ValueError(bin_not_found)
+        return location
 
 
 def create_target_filename(target):
