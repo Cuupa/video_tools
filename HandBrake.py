@@ -119,6 +119,10 @@ def write_journal(file, real_path):
     journal_file.write("\n")
 
 
+def sanitize_path(string):
+    return string.decode("utf-8").replace("\\n", "").replace("\n", "")
+
+
 def create_command(file, target):
     input_arg = ["--input", file]
     output_arg = ["--output", target]
@@ -134,7 +138,8 @@ def create_command(file, target):
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
 
-    cmd = [get_handbrake_path()] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
+    handbrake = sanitize_path(get_handbrake_path())
+    cmd = [handbrake] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
     print(cmd)
     return cmd
 
@@ -148,6 +153,7 @@ def get_handbrake_path():
         location = subprocess.check_output(["where", handbrakeCLI_path])
         if location == handbrakeCLI_path + " not found":
             raise ValueError(bin_not_found)
+        return location
     elif system == "Windows":
         if path.isfile(handbrakeCLI_path):
             return handbrakeCLI_path
@@ -155,7 +161,7 @@ def get_handbrake_path():
             return path.join("C:", "Program Files", "Handbrake", "HandBrakeCLI.exe")
     elif system == "Linux":
         location = subprocess.check_output(["which", handbrakeCLI_path])
-        if location.startswith("which: no " + handbrakeCLI_path + " in "):
+        if str(location).startswith("which: no " + handbrakeCLI_path + " in "):
             raise ValueError(bin_not_found)
         return location
 
@@ -173,6 +179,9 @@ def check_journal(file, real_path):
     If the file is already registered in the journal the script will not
     attempt to convert it again
     """
+    if not path.isfile(path.join(real_path, journal)):
+        return True
+
     with open(path.join(real_path, journal)) as f:
         lines = f.readlines()
         if path.basename(file) in lines:
