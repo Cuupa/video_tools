@@ -190,9 +190,9 @@ def check_journal(file, real_path):
     return True
 
 
-def copy_non_convert_files(files_to_copy, path):
+def copy_non_convert_files(files_to_copy, target_path):
     for file in files_to_copy:
-        target_dir = path.dirname(file).replace(source_path, path)
+        target_dir = path.dirname(file).replace(source_path, target_path)
         os.makedirs(target_dir, exist_ok=True)
         target = path.join(target_dir, path.basename(file))
         if not path.exists(target):
