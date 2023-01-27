@@ -17,8 +17,8 @@ and
 ~/Convert/Source
 respectively
 '''
-target_path = expanduser(path.join("E:\\", "Convert", "Result"))
-source_path = expanduser(path.join("E:\\", "Convert", "Source"))
+target_path = expanduser(path.join("~", "Convert", "Result"))
+source_path = expanduser(path.join("~", "Convert", "Source"))
 
 handbrakeCLI_path = "HandBrakeCLI"
 '''
@@ -120,8 +120,12 @@ def main():
 
 def write_journal(file, real_path):
     journal_file = open(path.join(real_path, journal), 'a+')
-    journal_file.write(path.basename(file))
-    journal_file.write("\n")
+    journal_file.write(path.basename(file) + '\n')
+    journal_file.close()
+
+
+def sanitize_path(string):
+    return string.decode("utf-8").replace("\\n", "").replace("\n", "")
 
 
 def create_command(file, target):
@@ -139,7 +143,8 @@ def create_command(file, target):
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
 
-    cmd = [get_handbrake_path()] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
+    handbrake = sanitize_path(get_handbrake_path())
+    cmd = [handbrake] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
     print(cmd)
     return cmd
 
@@ -153,6 +158,7 @@ def get_handbrake_path():
         location = subprocess.check_output(["where", handbrakeCLI_path])
         if location == handbrakeCLI_path + " not found":
             raise ValueError(bin_not_found)
+        return location
     elif system == "Windows":
         if path.isfile(handbrakeCLI_path):
             return handbrakeCLI_path
@@ -164,15 +170,13 @@ def get_handbrake_path():
                 raise ValueError(bin_not_found)
     elif system == "Linux":
         location = subprocess.check_output(["which", handbrakeCLI_path])
-        loc_string = str(location)
-        if loc_string.startswith("which: no " + handbrakeCLI_path + " in "):
+        if str(location).startswith("which: no " + handbrakeCLI_path + " in "):
             raise ValueError(bin_not_found)
         return location
 
 
 def create_target_filename(target):
     split = str(target).split(".")
-
     ending = split[len(split) - 1]
     target = target.replace("." + ending, "." + container_filetype[selected_container])
     target = target.replace("h264", "h265")
