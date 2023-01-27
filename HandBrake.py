@@ -17,8 +17,8 @@ and
 ~/Convert/Source
 respectively
 '''
-target_path = expanduser(path.join("~", "Convert", "Result"))
-source_path = expanduser(path.join("~", "Convert", "Source"))
+target_path = expanduser(path.join("E:\\", "Convert", "Result"))
+source_path = expanduser(path.join("E:\\", "Convert", "Source"))
 
 handbrakeCLI_path = "HandBrakeCLI"
 '''
@@ -31,6 +31,8 @@ Should be default to "C:\Program Files\HandBrake"
 '''
 
 valid_endings = ["mkv", "m4v", "mp4"]
+
+blacklist = [".avi", ".VOB", ".IFO", ".BUP"]
 '''
 File endings which will be queued for conversion
 '''
@@ -60,7 +62,7 @@ video_quality = "20"
 Video options for quality 20 (lower number for higher quality).
 If using the quality options, --two-pass is not necessary
 '''
-selected_encoder_preset = 6
+selected_encoder_preset = 4
 encoder_preset = ["ultrafast", "superfast", "veryfast", "faster", "medium", "slow", "slower", "veryslow", "placebo"]
 video_options_template = "--encoder {codec} --quality {quality} --encoder-preset {encoder_preset}"
 
@@ -112,9 +114,12 @@ def main():
             subprocess.run(cmd)
             write_journal(file, target_path)
 
+        else:
+            print("Skipping " + str(file))
+
 
 def write_journal(file, real_path):
-    journal_file = open(path.join(real_path, journal), 'a')
+    journal_file = open(path.join(real_path, journal), 'a+')
     journal_file.write(path.basename(file))
     journal_file.write("\n")
 
@@ -152,16 +157,22 @@ def get_handbrake_path():
         if path.isfile(handbrakeCLI_path):
             return handbrakeCLI_path
         else:
-            return path.join("C:", "Program Files", "Handbrake", "HandBrakeCLI.exe")
+            bin_path = path.join("C:\\", "Program Files", "Handbrake", "HandBrakeCLI.exe")
+            if os.path.isfile(bin_path):
+                return bin_path
+            else:
+                raise ValueError(bin_not_found)
     elif system == "Linux":
         location = subprocess.check_output(["which", handbrakeCLI_path])
-        if location.startswith("which: no " + handbrakeCLI_path + " in "):
+        loc_string = str(location)
+        if loc_string.startswith("which: no " + handbrakeCLI_path + " in "):
             raise ValueError(bin_not_found)
         return location
 
 
 def create_target_filename(target):
     split = str(target).split(".")
+
     ending = split[len(split) - 1]
     target = target.replace("." + ending, "." + container_filetype[selected_container])
     target = target.replace("h264", "h265")
@@ -173,22 +184,49 @@ def check_journal(file, real_path):
     If the file is already registered in the journal the script will not
     attempt to convert it again
     """
-    with open(path.join(real_path, journal)) as f:
-        lines = f.readlines()
-        if path.basename(file) in lines:
-            print(path.basename(file) + " was already processed. Skipping ...")
-            return False
+    try:
+        with open(path.join(real_path, journal)) as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.startswith(path.basename(file)):
+                    print(path.basename(file) + " was already processed. Skipping ...")
+                    return False
+    except FileNotFoundError:
+        return True
     return True
 
 
-def copy_non_convert_files(files_to_copy, path):
+def copy_non_convert_files(files_to_copy, temp_path):
     for file in files_to_copy:
-        target_dir = path.dirname(file).replace(source_path, path)
-        os.makedirs(target_dir, exist_ok=True)
-        target = path.join(target_dir, path.basename(file))
-        if not path.exists(target):
-            shutil.copyfile(file, target)
-            print("Copied " + file + " to " + target)
+        extension = os.path.splitext(file)
+        if extension in blacklist:
+            print("Skipping file " + file)
+
+        else:
+            source = ""
+            if temp_path.endswith("\\"):
+                source = source_path
+            else:
+                source = source_path + "\\"
+
+            target = ""
+            if temp_path.endswith("\\"):
+                target = target_path
+            else:
+                target = target_path + "\\"
+
+            target_dir = path.dirname(file).replace(source, target)
+            os.makedirs(target_dir, exist_ok=True)
+
+            target = path.join(target_dir, path.basename(file))
+
+            if not path.exists(target):
+                try:
+                    shutil.copyfile(file, target)
+                    print("Copied " + file + " to " + target)
+                except PermissionError:
+                    print("Failed to copy " + file + " to " + target)
+                    print("Permission denied")
 
 
 def find_files():
