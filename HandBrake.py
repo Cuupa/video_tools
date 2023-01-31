@@ -124,10 +124,6 @@ def write_journal(file, real_path):
     journal_file.close()
 
 
-def sanitize_path(string):
-    return string.decode("utf-8").replace("\\n", "").replace("\n", "")
-
-
 def create_command(file, target):
     input_arg = ["--input", file]
     output_arg = ["--output", target]
@@ -143,8 +139,7 @@ def create_command(file, target):
     audio_cmd = audio_options.format(audio_fallback=get_audio_fallback()).split()
     subtitle_cmd = subtitles_options.split()
 
-    handbrake = sanitize_path(get_handbrake_path())
-    cmd = [handbrake] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
+    cmd = [get_handbrake_path()] + file_cmd + video_cmd + audio_cmd + subtitle_cmd
     print(cmd)
     return cmd
 
